@@ -1,0 +1,6 @@
+[submodule "linalg"]
+	path = linalg
+	url = https://github.com/ml-wasm/linalg
+[submodule "dependencies/linalg"]
+	path = dependencies/linalg
+	url = https://github.com/ml-wasm/linalg
