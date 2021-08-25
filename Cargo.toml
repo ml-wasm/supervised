@@ -1,8 +1,11 @@
 [package]
-name = "supervised"
-version = "0.1.0"
 authors = ["Archit Bhonsle <abhonsle2000@gmail.com>"]
+description = "Regression and Classification powered by WebAssembly"
 edition = "2018"
+license = "MIT"
+name = "supervised"
+repository = "https://github.com/ml-wasm/supervised/"
+version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -15,6 +18,11 @@ console_error_panic_hook = { version = "0.1", optional = true }
 js-sys = "0.3"
 linalg = { path = "./dependencies/linalg", default-features = false }
 wasm-bindgen = "0.2"
+
+# Hopefully remove this later
+ndarray = { version = "0.15", features = ["serde", "rayon", "matrixmultiply-threading"] }
+ndarray-rand = "0.14"
+ndarray-stats = "0.5"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"

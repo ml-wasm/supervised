@@ -1,15 +1,18 @@
+mod base;
+mod naive_bayes;
+mod types;
 mod utils;
 
 use wasm_bindgen::prelude::*;
 
 pub use linalg::init_thread_pool;
 
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
+pub fn set_panic_hook() {
+    #[cfg(feature = "console_error_panic_hook")]
+    console_error_panic_hook::set_once();
 }
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    utils::set_panic_hook();
+    set_panic_hook();
 }
