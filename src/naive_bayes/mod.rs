@@ -17,10 +17,10 @@ trait BaseNaiveBayes {
 
     // Perform classification on the given test vectors
     //
-    // Params
+    // Parameters
     //   x: input samples (n_samples, n_features)
     // Returns
-    //   c: predicted target values of x (n_samples, )
+    //   c: predicted target values for x (n_samples, )
     fn predict(&self, x: &MatF) -> Result<VecF, String> {
         if !self.is_fitted() {
             return Err("This Naive Bayes classifier has not been fitted yet".to_string());
@@ -36,13 +36,13 @@ trait BaseNaiveBayes {
         ))
     }
 
-    // Perform classification on the given test vectors
+    // Return the log probability estimates for the input matrix x
     //
     // Params
     //   x: input samples (n_samples, n_features)
     // Returns
     //   c: log probability of the samples for each class in the model. The columns
-    //      are in the same order as the `classes`
+    //      are in the same order as the `classes` (n_samples, n_features)
     fn predict_log_proba(&self, x: &MatF) -> Result<MatF, String> {
         if !self.is_fitted() {
             return Err("This Naive Bayes classifier has not been fitted yet".to_string());
@@ -57,10 +57,13 @@ trait BaseNaiveBayes {
         Ok(&jll - &log_prob_x)
     }
 
-    // Perform classification on the given test vectors
+    // Return the probability estimates for the input matrix x
     //
     // Params
     //   x: input samples (n_samples, n_features)
+    // Returns
+    //   c: probability of the samples for each class in the model. The columns
+    //      are in the same order as the `classes` (n_samples, n_features)
     fn predict_proba(&self, x: &MatF) -> Result<MatF, String> {
         Ok(self.predict_log_proba(x)?.map(|x| x.exp()))
     }

@@ -293,10 +293,38 @@ impl GaussianNaiveBayes {
     //
     // Parameters
     //   x: input samples (n_samples, n_features)
+    // Returns
+    //   c: predicted target values for x (n_samples, )
     #[wasm_bindgen(js_name = predict)]
-    pub fn predict_to_js(&self, x: &FloatsMatrix) -> Result<FloatsVector, JsValue> {
+    pub fn predict_js(&self, x: &FloatsMatrix) -> Result<FloatsVector, JsValue> {
         let y = self.predict(&x.data)?;
 
         Ok(FloatsVector { data: y })
+    }
+
+    // Return the log probability estimates for the input matrix x
+    //
+    // Params
+    //   x: input samples (n_samples, n_features)
+    // Returns
+    //   c: log probability of the samples for each class in the model. The columns
+    //      are in the same order as the `classes` (n_samples, n_features)
+    fn predict_log_proba_js(&self, x: &FloatsMatrix) -> Result<FloatsMatrix, String> {
+        Ok(FloatsMatrix {
+            data: self.predict_log_proba(&x.data)?,
+        })
+    }
+
+    // Return the probability estimates for the input matrix x
+    //
+    // Params
+    //   x: input samples (n_samples, n_features)
+    // Returns
+    //   c: probability of the samples for each class in the model. The columns
+    //      are in the same order as the `classes` (n_samples, n_features)
+    fn predict_proba_js(&self, x: &FloatsMatrix) -> Result<FloatsMatrix, String> {
+        Ok(FloatsMatrix {
+            data: self.predict_proba(&x.data)?,
+        })
     }
 }
