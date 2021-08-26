@@ -1,6 +1,17 @@
 use crate::types::VecF;
+use wasm_bindgen::prelude::*;
 
-pub fn remove_depulicates_fv(x: &VecF) -> VecF {
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: String);
+}
+
+pub fn console_log(s: String) {
+    unsafe { log(s) }
+}
+
+pub fn remove_duplicates_fv(x: &VecF) -> VecF {
     let mut xv = x.to_vec();
     xv.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     xv.dedup();

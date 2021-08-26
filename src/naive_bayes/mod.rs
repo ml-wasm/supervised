@@ -1,7 +1,10 @@
 use ndarray::{Array2, Axis};
 use ndarray_stats::QuantileExt;
 
-use crate::types::{MatF, VecF};
+use crate::{
+    types::{MatF, VecF},
+    utils,
+};
 
 mod gaussian;
 
@@ -29,6 +32,7 @@ trait BaseNaiveBayes {
         self.check_x(x)?;
 
         let jll = self.joint_log_likelihood(x)?;
+
         let classes = self.classes()?;
 
         Ok(VecF::from_iter(
