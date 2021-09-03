@@ -8,7 +8,7 @@ extern "C" {
 }
 
 pub fn console_log(s: String) {
-    unsafe { log(s) }
+    log(s)
 }
 
 pub fn remove_duplicates_fv(x: &VecF) -> VecF {

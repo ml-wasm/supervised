@@ -1,12 +1,11 @@
-use linalg::{matrices::floats::FloatsMatrix, vectors::floats::FloatsVector};
+use linalg::{matrices::floats::FloatsMatrix, vectors::floats::FloatsVector, Linalg};
 use ndarray::{s, Axis, Zip};
 use ndarray_stats::{QuantileExt, SummaryStatisticsExt};
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    base::Classifier,
-    types::{MatF, VecF, VecI},
-    utils,
+    base::{Classifier, Estimator, Param, Params},
+    types, utils,
 };
 
 use super::BaseNaiveBayes;
@@ -16,7 +15,7 @@ use super::BaseNaiveBayes;
 pub struct GaussianNaiveBayes {
     // Prior probabilities of the classes. If specified the priors are not
     // adjusted according to the data.
-    priors: Option<VecF>,
+    priors: Option<types::VecF>,
 
     // Portion of the largest variance of all features that is added to
     // variances for calculation stability.
@@ -26,13 +25,13 @@ pub struct GaussianNaiveBayes {
     fitted: bool,
 
     // Number of training samples observed within each class
-    class_count: Option<VecF>,
+    class_count: Option<types::VecF>,
 
     // Probability of each class
-    class_prior: Option<VecF>,
+    class_prior: Option<types::VecF>,
 
     // Class labels known to the classifier
-    classes: Option<VecF>,
+    classes: Option<types::VecF>,
 
     // Absolute additive value to variances
     epsilon: Option<f64>,
@@ -41,27 +40,27 @@ pub struct GaussianNaiveBayes {
     n_features_in: Option<i32>,
 
     // Variance of each feature per class
-    var: Option<MatF>,
+    var: Option<types::MatF>,
 
     // Mean of each feature per class
-    theta: Option<MatF>,
+    theta: Option<types::MatF>,
 }
 
 // Getters
 impl GaussianNaiveBayes {
-    fn class_prior(&self) -> Result<&VecF, String> {
+    fn class_prior(&self) -> Result<&types::VecF, String> {
         Ok(self.class_prior.as_ref().ok_or("Not fitted yet")?)
     }
 
-    fn var(&self) -> Result<&MatF, String> {
+    fn var(&self) -> Result<&types::MatF, String> {
         Ok(self.var.as_ref().ok_or("Not fitted yet")?)
     }
 
-    fn theta(&self) -> Result<&MatF, String> {
+    fn theta(&self) -> Result<&types::MatF, String> {
         Ok(self.theta.as_ref().ok_or("Not fitted yet")?)
     }
 
-    fn priors(&self) -> Result<&VecF, String> {
+    fn priors(&self) -> Result<&types::VecF, String> {
         Ok(self.priors.as_ref().ok_or("Not fitted yet")?)
     }
 
@@ -69,55 +68,108 @@ impl GaussianNaiveBayes {
         Ok(self.epsilon.as_ref().ok_or("Not fitted yet")?)
     }
 
-    fn class_count(&self) -> Result<&VecF, String> {
+    fn class_count(&self) -> Result<&types::VecF, String> {
         Ok(self.class_count.as_ref().ok_or("Not fitted yet")?)
     }
 
-    fn class_prior_mut(&mut self) -> Result<&mut VecF, String> {
-        Ok(self.class_prior.as_mut().ok_or("Not fitted yet")?)
-    }
-
-    fn var_mut(&mut self) -> Result<&mut MatF, String> {
-        Ok(self.var.as_mut().ok_or("Not fitted yet")?)
-    }
-
-    fn theta_mut(&mut self) -> Result<&mut MatF, String> {
-        Ok(self.theta.as_mut().ok_or("Not fitted yet")?)
-    }
-
-    fn priors_mut(&mut self) -> Result<&mut VecF, String> {
-        Ok(self.priors.as_mut().ok_or("Not fitted yet")?)
-    }
-
-    fn epsilon_mut(&mut self) -> Result<&mut f64, String> {
-        Ok(self.epsilon.as_mut().ok_or("Not fitted yet")?)
-    }
-
-    fn class_count_mut(&mut self) -> Result<&mut VecF, String> {
-        Ok(self.class_count.as_mut().ok_or("Not fitted yet")?)
+    fn n_features_in(&self) -> Result<&i32, String> {
+        Ok(self.n_features_in.as_ref().ok_or("Not fitted yet")?)
     }
 }
 
-// impl Estimator for GaussianNaiveBayes {
-//     fn get_params(&self) -> Params;
-//
-//     fn set_params(&mut self, parameters: Params);
-//
-//     fn set_features(&mut self, x: linalg::Linalg);
-//
-//     fn get_n_features(&self) -> i32;
-//
-//     fn set_feature_names(&mut self, x: Vec<String>);
-//
-//     fn get_features_names(&self);
-//
-//     fn validate_data(&self, x: linalg::Linalg, y: linalg::Linalg);
-// }
+// Getters for JavaScript
+#[wasm_bindgen]
+impl GaussianNaiveBayes {
+    #[wasm_bindgen(getter, js_name = classPrior)]
+    pub fn class_prior_js(&self) -> Result<FloatsVector, JsValue> {
+        Ok(FloatsVector {
+            data: self.class_prior()?.clone(),
+        })
+    }
 
-impl Classifier for GaussianNaiveBayes {}
+    #[wasm_bindgen(getter, js_name = var)]
+    pub fn var_js(&self) -> Result<FloatsMatrix, JsValue> {
+        Ok(FloatsMatrix {
+            data: self.var()?.clone(),
+        })
+    }
+
+    #[wasm_bindgen(getter, js_name = theta)]
+    pub fn theta_js(&self) -> Result<FloatsMatrix, JsValue> {
+        Ok(FloatsMatrix {
+            data: self.theta()?.clone(),
+        })
+    }
+
+    #[wasm_bindgen(getter, js_name = priors)]
+    pub fn priors_js(&self) -> Result<FloatsVector, JsValue> {
+        Ok(FloatsVector {
+            data: self.priors()?.clone(),
+        })
+    }
+
+    #[wasm_bindgen(getter, js_name = epsilon)]
+    pub fn epsilon_js(&self) -> Result<f64, JsValue> {
+        Ok(self.epsilon()?.clone())
+    }
+
+    #[wasm_bindgen(getter, js_name = classCount)]
+    pub fn class_count_js(&self) -> Result<FloatsVector, JsValue> {
+        Ok(FloatsVector {
+            data: self.class_count()?.clone(),
+        })
+    }
+
+    #[wasm_bindgen(getter, js_name = nFeaturesIn)]
+    pub fn n_features_in_js(&self) -> Result<i32, JsValue> {
+        Ok(self.n_features_in()?.clone())
+    }
+}
+
+impl Estimator for GaussianNaiveBayes {
+    fn get_params(&self) -> Params {
+        let mut params = Params::new();
+
+        let priors = match self.priors.as_ref() {
+            Some(p) => Param::VecF(p.clone()),
+            None => Param::N,
+        };
+
+        params.insert("priors".to_string(), priors);
+        params.insert("var_smoothing".to_string(), Param::F(self.var_smoothing));
+
+        params
+    }
+
+    //     fn set_params(&mut self, parameters: Params) {}
+    //
+    //     fn set_features(&mut self, x: linalg::Linalg);
+    //
+    //     fn get_n_features(&self) -> i32;
+    //
+    //     fn set_feature_names(&mut self, x: Vec<String>);
+    //
+    //     fn get_features_names(&self);
+    //
+    //     fn validate_data(&self, x: linalg::Linalg, y: linalg::Linalg);
+}
+
+#[wasm_bindgen]
+impl GaussianNaiveBayes {
+    fn get_params_js(&self) -> js_sys::Map {
+        let params = self.get_params();
+        let params_map = js_sys::Map::new();
+
+        params.iter().for_each(|(key, val)| {
+            params_map.set(&JsValue::from(key.clone()), &val.to_jsvalue());
+        });
+
+        params_map
+    }
+}
 
 impl BaseNaiveBayes for GaussianNaiveBayes {
-    fn classes(&self) -> Result<&VecF, String> {
+    fn classes(&self) -> Result<&types::VecF, String> {
         Ok(self.classes.as_ref().ok_or("Not fitted yet")?)
     }
 
@@ -129,12 +181,12 @@ impl BaseNaiveBayes for GaussianNaiveBayes {
     //
     // Params
     //   x: input array (n_classes, n_samples)
-    fn joint_log_likelihood(&self, x: &MatF) -> Result<MatF, String> {
+    fn joint_log_likelihood(&self, x: &types::MatF) -> Result<types::MatF, String> {
         let classes = self.classes()?;
         let class_prior = self.class_prior()?;
         let var = self.var()?;
         let theta = self.theta()?;
-        let mut joint_log_likelihood = MatF::default((classes.len(), x.nrows()));
+        let mut joint_log_likelihood = types::MatF::default((classes.len(), x.nrows()));
 
         for i in 0..classes.len() {
             let joint_i = class_prior[i].ln();
@@ -151,7 +203,7 @@ impl BaseNaiveBayes for GaussianNaiveBayes {
         Ok(joint_log_likelihood.reversed_axes())
     }
 
-    fn check_x(&self, x: &MatF) -> Result<(), String> {
+    fn check_x(&self, x: &types::MatF) -> Result<(), String> {
         Ok(())
     }
 }
@@ -171,11 +223,11 @@ impl GaussianNaiveBayes {
     //   total_var: Updated variance for each Gaussian over the combined set (number of Gaussians, )
     fn update_mean_variance(
         n_past: i32,
-        mu: &VecF,
-        var: &VecF,
-        x: &MatF,
-        sample_weight: Option<&VecF>,
-    ) -> Result<(VecF, VecF), String> {
+        mu: &types::VecF,
+        var: &types::VecF,
+        x: &types::MatF,
+        sample_weight: Option<&types::VecF>,
+    ) -> Result<(types::VecF, types::VecF), String> {
         if x.nrows() == 0 {
             return Ok((mu.clone(), var.clone()));
         }
@@ -220,10 +272,10 @@ impl GaussianNaiveBayes {
     //   sample_weight: weights applied to individual samples (n_samples, )
     fn partial_fit(
         &mut self,
-        x: &MatF,
-        y: &VecF,
-        classes: Option<&VecF>,
-        sample_weight: Option<&VecF>,
+        x: &types::MatF,
+        y: &types::VecF,
+        classes: Option<&types::VecF>,
+        sample_weight: Option<&types::VecF>,
     ) -> Result<(), String> {
         let first_call = self.is_fitted();
         // I believe this is same as "_check_partial_fit_first_call"
@@ -267,9 +319,9 @@ impl GaussianNaiveBayes {
         if first_call {
             let n_features = x.ncols();
             let n_classes = self.classes()?.len();
-            self.theta = Some(MatF::zeros((n_classes, n_features)));
-            self.var = Some(MatF::zeros((n_classes, n_features)));
-            self.class_count = Some(VecF::zeros(n_classes));
+            self.theta = Some(types::MatF::zeros((n_classes, n_features)));
+            self.var = Some(types::MatF::zeros((n_classes, n_features)));
+            self.class_count = Some(types::VecF::zeros(n_classes));
 
             if self.priors.is_some() {
                 let priors = self.priors()?;
@@ -288,7 +340,7 @@ impl GaussianNaiveBayes {
 
                 self.class_prior = Some(priors.clone());
             } else {
-                self.class_prior = Some(VecF::zeros(n_classes));
+                self.class_prior = Some(types::VecF::zeros(n_classes));
             }
         } else {
             let theta = self.theta()?;
@@ -383,10 +435,10 @@ impl GaussianNaiveBayes {
     //   sample_weight: weights applied to individual samples
     fn partial_fit_reset(
         &mut self,
-        x: &MatF,
-        y: &VecF,
-        classes: Option<&VecF>,
-        sample_weight: Option<&VecF>,
+        x: &types::MatF,
+        y: &types::VecF,
+        classes: Option<&types::VecF>,
+        sample_weight: Option<&types::VecF>,
     ) -> Result<(), String> {
         self.classes = None;
 
@@ -401,7 +453,12 @@ impl GaussianNaiveBayes {
     //   x: training vectors (n_samples, n_features)
     //   y: target values (n_samples)
     //   sample_weight: weights applied to individual samples (n_samples, ) (optional)
-    fn fit(&mut self, x: &MatF, y: &VecF, sample_weight: Option<&VecF>) -> Result<(), String> {
+    fn fit(
+        &mut self,
+        x: &types::MatF,
+        y: &types::VecF,
+        sample_weight: Option<&types::VecF>,
+    ) -> Result<(), String> {
         // TODO validation for x and y
 
         let classes = utils::remove_duplicates_fv(y);
@@ -409,6 +466,30 @@ impl GaussianNaiveBayes {
         self.partial_fit_reset(x, y, Some(&classes), sample_weight)?;
 
         Ok(())
+    }
+}
+
+impl Classifier for GaussianNaiveBayes {
+    fn predict(&self, x: &types::MatF) -> Result<types::VecF, String> {
+        BaseNaiveBayes::predict(self, x)
+    }
+}
+
+#[wasm_bindgen]
+impl GaussianNaiveBayes {
+    #[wasm_bindgen(js_name = score)]
+    pub fn score_js(&self, x: &FloatsMatrix, y: &FloatsVector) -> Result<f64, JsValue> {
+        Ok(Classifier::score(self, &x.data, &y.data, None)?)
+    }
+
+    #[wasm_bindgen(js_name = scoreWithSampleWeights)]
+    pub fn score_with_sample_weights_js(
+        &self,
+        x: &FloatsMatrix,
+        y: &FloatsVector,
+        sample_weight: &FloatsVector,
+    ) -> Result<f64, JsValue> {
+        Ok(Classifier::score(self, &x.data, &y.data, None)?)
     }
 }
 
@@ -496,7 +577,7 @@ impl GaussianNaiveBayes {
     #[wasm_bindgen(js_name = predict)]
     pub fn predict_js(&self, x: &FloatsMatrix) -> Result<FloatsVector, JsValue> {
         Ok(FloatsVector {
-            data: self.predict(&x.data)?,
+            data: BaseNaiveBayes::predict(self, &x.data)?,
         })
     }
 
